@@ -1,0 +1,25 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:github.com)",
+      "Bash(gh api *)",
+      "PowerShell(gh api *)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "PowerShell(New-Item *)",
+      "Bash(python -c \"import ast; import os; errors=[]; [errors.append\\(f'{root}/{f}: {e}'\\) for root,_,files in os.walk\\('bot'\\) for f in files if f.endswith\\('.py'\\) for e in [None] if not \\(lambda p: \\(open\\(p,'r',encoding='utf-8'\\).read\\(\\), ast.parse\\(open\\(p,'r',encoding='utf-8'\\).read\\(\\)\\)\\)\\)\\(os.path.join\\(root,f\\)\\) or True] ; print\\('Syntax OK'\\)\")",
+      "PowerShell(Get-Command *)",
+      "Bash(/c/Users/User/AppData/Local/Python/bin/python.exe -c ' *)",
+      "PowerShell(docker compose version *)",
+      "PowerShell(docker info *)",
+      "PowerShell(nslookup *)",
+      "PowerShell(docker run *)",
+      "PowerShell(docker restart iiv_bot *)",
+      "PowerShell(docker exec iiv_postgres *)",
+      "PowerShell(docker exec *)",
+      "PowerShell(gh auth *)",
+      "PowerShell(winget install *)"
+    ]
+  },
+  "prefersReducedMotion": true
+}

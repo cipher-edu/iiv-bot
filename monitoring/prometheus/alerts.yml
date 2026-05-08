@@ -1,0 +1,26 @@
+groups:
+  - name: bot_alerts
+    rules:
+      - alert: HighMemoryUsage
+        expr: process_resident_memory_bytes > 400000000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Bot xotira ishlatishi yuqori (> 400MB)"
+
+      - alert: DatabaseConnectionsHigh
+        expr: pg_stat_activity_count > 80
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL ulanishlar soni yuqori (> 80)"
+
+      - alert: RedisMemoryHigh
+        expr: redis_memory_used_bytes / redis_memory_max_bytes > 0.9
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Redis xotira 90% dan oshdi"
