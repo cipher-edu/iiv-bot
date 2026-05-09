@@ -11,6 +11,10 @@ def main_menu_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
         [KeyboardButton(text="📰 Yangiliklar"), KeyboardButton(text="🏆 Reyting")],
         [KeyboardButton(text="📜 Sertifikatlar"), KeyboardButton(text="🎮 Yutuqlar")],
         [KeyboardButton(text="📚 Kutubxona"), KeyboardButton(text="🤖 AI Yordamchi")],
+        [KeyboardButton(text="🔖 Saqlanganlar"), KeyboardButton(text="🔍 Qidiruv")],
+        [KeyboardButton(text="🎯 O'qish yo'li"), KeyboardButton(text="🎯 Maqsadlar")],
+        [KeyboardButton(text="🔥 Streak"), KeyboardButton(text="🔔 Bildirishnomalar")],
+        [KeyboardButton(text="✉️ Taklif")],
         [KeyboardButton(text="👤 Profil"), KeyboardButton(text="❓ Yordam")],
     ]
     if is_admin:

@@ -18,7 +18,25 @@
       "PowerShell(docker exec iiv_postgres *)",
       "PowerShell(docker exec *)",
       "PowerShell(gh auth *)",
-      "PowerShell(winget install *)"
+      "PowerShell(winget install *)",
+      "Bash(docker compose restart *)",
+      "Bash(docker compose ps *)",
+      "Bash(docker compose config *)",
+      "Bash(findstr /i \"project\")",
+      "Bash(docker restart iiv_bot *)",
+      "PowerShell($count = \\(Get-ChildItem \"D:\\\\iiv-bot\" -Force -ErrorAction SilentlyContinue\\).Count; \"items: $count\"; Get-Item \"D:\\\\iiv-bot\" -Force | Format-List CreationTime, LastWriteTime, Attributes)",
+      "Bash(docker compose *)",
+      "Bash(echo \"Exit: $?\")",
+      "Read(//tmp/**)",
+      "Bash(docker network *)",
+      "Bash(docker volume *)",
+      "Bash(docker exec iiv_postgres *)",
+      "Bash(docker cp *)",
+      "Bash(docker exec *)",
+      "Bash(docker info *)",
+      "PowerShell(cmd /c \"D:\\\\iiv bot\\\\start.bat\" 2>&1 | Select-Object -First 50)",
+      "PowerShell(cmd /c \"D:\\\\iiv bot\\\\start.bat\" 2>&1 | Select-Object -Last 60)",
+      "Bash(curl -s \"https://api.github.com/repos/cipher-edu/iiv-bot\")"
     ]
   },
   "prefersReducedMotion": true

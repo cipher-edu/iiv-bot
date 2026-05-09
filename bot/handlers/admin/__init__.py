@@ -14,6 +14,10 @@ from bot.handlers.admin.surveys import router as surveys_router
 from bot.handlers.admin.library import router as library_router
 from bot.handlers.admin.organizations import router as organizations_router
 from bot.handlers.admin.export import router as export_router
+from bot.handlers.admin.ai_questions import router as ai_questions_router
+from bot.handlers.admin.broadcast_segments import router as broadcast_segments_router
+from bot.handlers.admin.statistics import router as statistics_router
+from bot.handlers.admin.import_users import router as import_users_router
 from bot.filters.admin import IsAdminFilter
 
 admin_router = Router(name="admin")
@@ -35,4 +39,8 @@ admin_router.include_routers(
     library_router,
     organizations_router,
     export_router,
+    ai_questions_router,
+    broadcast_segments_router,
+    statistics_router,
+    import_users_router,
 )

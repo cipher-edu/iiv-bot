@@ -18,6 +18,7 @@ def setup_scheduler(bot) -> AsyncIOScheduler:
         streak_check_job,
         cleanup_job,
         health_check_job,
+        spaced_repetition_job,
     )
 
     scheduler.add_job(
@@ -78,6 +79,15 @@ def setup_scheduler(bot) -> AsyncIOScheduler:
         minutes=5,
         id="health_check",
         name="Tizim salomatligi tekshiruvi",
+        kwargs={"bot": bot},
+        replace_existing=True,
+    )
+
+    scheduler.add_job(
+        spaced_repetition_job,
+        CronTrigger(hour=10, minute=0),
+        id="spaced_repetition",
+        name="Spaced repetition eslatmalari",
         kwargs={"bot": bot},
         replace_existing=True,
     )

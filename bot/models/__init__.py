@@ -12,6 +12,18 @@ from bot.models.library import FileItem, FileCategory, Bookmark
 from bot.models.task import Task, TaskAssignment
 from bot.models.survey import Survey, SurveyQuestion, SurveyResponse
 from bot.models.ai_history import AIConversation, AIMessage
+from bot.models.bookmark import SavedItem
+from bot.models.suggestion import Suggestion
+from bot.models.learning_path import LearningPath, PathCourse, UserPathEnrollment
+from bot.models.qa import LessonQuestion, LessonAnswer, QAUpvote
+from bot.models.goal import UserGoal
+from bot.models.repetition import SpacedRepetition
+from bot.models.content_version import LessonHistory
+from bot.models.course import (
+    LessonAttachment,
+    LessonRating,
+    CoursePrerequisite,
+)
 
 __all__ = [
     "Base",
@@ -57,4 +69,18 @@ __all__ = [
     "SurveyResponse",
     "AIConversation",
     "AIMessage",
+    "SavedItem",
+    "Suggestion",
+    "LearningPath",
+    "PathCourse",
+    "UserPathEnrollment",
+    "LessonQuestion",
+    "LessonAnswer",
+    "QAUpvote",
+    "UserGoal",
+    "SpacedRepetition",
+    "LessonHistory",
+    "LessonAttachment",
+    "LessonRating",
+    "CoursePrerequisite",
 ]

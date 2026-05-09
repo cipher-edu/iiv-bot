@@ -33,10 +33,12 @@ class UserStatus(str, Enum):
 class RegistrationStep(str, Enum):
     PHONE = "phone"
     FULL_NAME = "full_name"
-    ROLE = "role"
-    ORGANIZATION = "organization"
+    CATEGORY = "category"
     POSITION = "position"
     COMPLETED = "completed"
+    # legacy steps preserved for backwards compatibility with existing rows
+    ROLE = "role"
+    ORGANIZATION = "organization"
 
 
 class TestSessionStatus(str, Enum):
@@ -56,6 +58,32 @@ class StaffRole(str, Enum):
     WORKER = "ishchi_hodim"
     DECANATE = "dekanat"
     PROFESSOR = "professor"
+
+
+class UserCategory(str, Enum):
+    HODIM = "hodim"
+    FUQARO = "fuqaro"
+
+
+class AttachmentType(str, Enum):
+    VIDEO = "video"
+    PDF = "pdf"
+    IMAGE = "image"
+    DOCUMENT = "document"
+    AUDIO = "audio"
+    LINK = "link"
+
+
+class AttachmentStorage(str, Enum):
+    TELEGRAM = "telegram"
+    MINIO = "minio"
+    URL = "url"
+
+
+class CourseStatus(str, Enum):
+    DRAFT = "draft"
+    PUBLISHED = "published"
+    ARCHIVED = "archived"
 
 
 class Language(str, Enum):

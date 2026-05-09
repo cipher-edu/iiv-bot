@@ -150,6 +150,50 @@ async def cleanup_job():
     logger.info("Cleanup tugadi")
 
 
+async def spaced_repetition_job(bot: Bot):
+    """Send reminders for lessons whose next_review_at has passed."""
+    from datetime import datetime, timedelta
+    from sqlalchemy import select, update as sa_update
+    from bot.models.repetition import SpacedRepetition
+    from bot.models.course import Lesson
+
+    logger.info("Spaced repetition tekshiruvi boshlandi")
+    async with async_session_factory() as session:
+        async with session.begin():
+            now = datetime.utcnow()
+            stmt = select(SpacedRepetition).where(
+                SpacedRepetition.is_active == True,
+                SpacedRepetition.sent_reminder == False,
+                SpacedRepetition.next_review_at <= now,
+            ).limit(200)
+            items = (await session.execute(stmt)).scalars().all()
+
+            user_repo = UserRepository(session)
+            for item in items:
+                user = await user_repo.get_by_id(item.user_id)
+                lesson = await session.get(Lesson, item.lesson_id)
+                if not user or not lesson:
+                    item.is_active = False
+                    continue
+                try:
+                    await bot.send_message(
+                        user.telegram_id,
+                        f"🔁 <b>Takrorlash vaqti</b>\n\n"
+                        f"Quyidagi darsni qayta ko'rib chiqing:\n"
+                        f"📖 <b>{lesson.title}</b>",
+                    )
+                    item.sent_reminder = True
+                    item.last_reviewed_at = now
+                    item.review_count += 1
+                    item.interval_days = min(item.interval_days * 2, 90)
+                    item.next_review_at = now + timedelta(days=item.interval_days)
+                    item.sent_reminder = False
+                except Exception:
+                    pass
+            await session.commit()
+    logger.info("Spaced repetition tugadi")
+
+
 async def health_check_job(bot: Bot):
     try:
         me = await bot.get_me()

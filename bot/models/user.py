@@ -11,6 +11,7 @@ from bot.core.enums import (
     RegistrationStep,
     OrganizationType,
     StaffRole,
+    UserCategory,
 )
 
 
@@ -52,6 +53,9 @@ class TelegramUser(Base):
     full_name: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
     phone: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
     position: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    category: Mapped[Optional[UserCategory]] = mapped_column(
+        String(20), nullable=True
+    )
     staff_role: Mapped[Optional[StaffRole]] = mapped_column(
         String(50), nullable=True
     )
@@ -113,3 +117,11 @@ class TelegramUser(Base):
             StaffRole.PROFESSOR: OrganizationType.CHAIR,
         }
         return mapping.get(self.staff_role)
+
+    @property
+    def is_hodim(self) -> bool:
+        return self.category == UserCategory.HODIM
+
+    @property
+    def is_fuqaro(self) -> bool:
+        return self.category == UserCategory.FUQARO

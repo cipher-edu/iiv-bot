@@ -196,8 +196,8 @@ services:
       - ./nginx/ssl:/etc/nginx/ssl:ro
       - ./nginx/security_headers.conf:/etc/nginx/security_headers.conf:ro
     ports:
-      - "80:80"
-      - "443:443"
+      - "8080:80"
+      - "8443:443"
     depends_on:
       - pgadmin
       - grafana
@@ -267,4 +267,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.20.0.0/16
+        - subnet: 172.22.0.0/16

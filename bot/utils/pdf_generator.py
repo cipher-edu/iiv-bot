@@ -1,3 +1,4 @@
+import io
 import os
 from datetime import date
 from pathlib import Path
@@ -6,10 +7,24 @@ from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib.units import cm
 from reportlab.pdfgen import canvas
 from reportlab.lib.colors import HexColor
+from reportlab.lib.utils import ImageReader
+
+import qrcode
 
 
 DATA_DIR = Path(__file__).resolve().parent.parent.parent / "data" / "certificates"
 DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _build_qr_image(payload: str) -> ImageReader:
+    qr = qrcode.QRCode(version=None, box_size=4, border=1)
+    qr.add_data(payload)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+    return ImageReader(buf)
 
 
 def generate_certificate_pdf(
@@ -79,6 +94,22 @@ def generate_certificate_pdf(
         page_width - 3 * cm, 3 * cm,
         f"Sertifikat raqami: {certificate_number}"
     )
+
+    # QR code (verification): scanning shows "/verify <number>" deep link
+    try:
+        qr_payload = f"VERIFY:{certificate_number}"
+        qr_img = _build_qr_image(qr_payload)
+        qr_size = 3 * cm
+        c.drawImage(
+            qr_img,
+            page_width - 3 * cm - qr_size,
+            3.5 * cm,
+            width=qr_size,
+            height=qr_size,
+            mask="auto",
+        )
+    except Exception:
+        pass
 
     c.save()
     return str(filepath)

@@ -58,16 +58,39 @@ async def download_certificate(
         await callback.answer("Sertifikat topilmadi.", show_alert=True)
         return
 
-    if cert.file_path:
+    file_path = cert.file_path
+    from pathlib import Path
+    if not file_path or not Path(file_path).exists():
         try:
-            file = FSInputFile(cert.file_path)
-            await callback.message.answer_document(
-                file,
-                caption=f"📜 {cert.title}\n🔢 {cert.certificate_number}",
+            from bot.utils.pdf_generator import generate_certificate_pdf
+            file_path = generate_certificate_pdf(
+                full_name=db_user.display_name,
+                course_title=cert.title,
+                certificate_number=cert.certificate_number,
+                issued_date=cert.issued_date,
+                score_percent=cert.score_percent,
             )
-        except Exception:
-            await callback.answer("Fayl topilmadi. Admin bilan bog'laning.", show_alert=True)
-    else:
-        await callback.answer("PDF hali yaratilmagan.", show_alert=True)
+            cert.file_path = file_path
+            await session.flush()
+        except Exception as e:
+            await callback.answer(
+                f"PDF yaratishda xato: {e}", show_alert=True
+            )
+            return
+
+    try:
+        file = FSInputFile(file_path)
+        await callback.message.answer_document(
+            file,
+            caption=(
+                f"📜 {cert.title}\n"
+                f"🔢 {cert.certificate_number}\n"
+                f"🔍 Tekshirish: <code>/verify {cert.certificate_number}</code>"
+            ),
+        )
+    except Exception:
+        await callback.answer(
+            "Fayl yuborishda xato. Admin bilan bog'laning.", show_alert=True
+        )
 
     await callback.answer()

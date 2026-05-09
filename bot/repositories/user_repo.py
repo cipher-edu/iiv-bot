@@ -151,6 +151,30 @@ class UserRepository(BaseRepository[TelegramUser]):
         result = await self.session.execute(stmt)
         return dict(result.all())
 
+    async def get_blocked_users(
+        self, offset: int = 0, limit: int = 50
+    ) -> Sequence[TelegramUser]:
+        stmt = (
+            select(TelegramUser)
+            .where(
+                TelegramUser.is_blocked == True,
+                TelegramUser.is_deleted == False,
+            )
+            .order_by(TelegramUser.updated_at.desc())
+            .offset(offset)
+            .limit(limit)
+        )
+        result = await self.session.execute(stmt)
+        return result.scalars().all()
+
+    async def count_blocked(self) -> int:
+        stmt = select(func.count(TelegramUser.id)).where(
+            TelegramUser.is_blocked == True,
+            TelegramUser.is_deleted == False,
+        )
+        result = await self.session.execute(stmt)
+        return result.scalar_one()
+
     async def get_by_organization(
         self, org_id: int, offset: int = 0, limit: int = 10
     ) -> Sequence[TelegramUser]:

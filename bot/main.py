@@ -1,5 +1,6 @@
 import asyncio
 import logging
+import signal
 import sys
 
 from aiogram import Bot, Dispatcher
@@ -30,8 +31,11 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+_heartbeat_task: asyncio.Task | None = None
+
 
 async def on_startup(bot: Bot):
+    global _heartbeat_task
     logger.info("Bot ishga tushmoqda...")
 
     from bot.models.base import engine, Base
@@ -39,9 +43,24 @@ async def on_startup(bot: Bot):
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database jadvallar yaratildi")
 
+    from bot.models.migrations import apply_additive_migrations
+    await apply_additive_migrations(engine)
+    logger.info("Schema patches applied")
+
+    from bot.services.superadmin_sync import sync_superadmins
+    await sync_superadmins(settings.bot_superadmin_ids)
+    logger.info("Superadmin sinxronizatsiyasi tugadi")
+
     sched = setup_scheduler(bot)
     sched.start()
     logger.info("Scheduler ishga tushdi")
+
+    from bot.core.broadcast_queue import init_broadcast_queue
+    init_broadcast_queue(bot)
+    logger.info("Broadcast queue ishga tushdi")
+
+    from bot.core.heartbeat import heartbeat_loop
+    _heartbeat_task = asyncio.create_task(heartbeat_loop(), name="heartbeat")
 
     for admin_id in settings.bot_superadmin_ids:
         try:
@@ -54,8 +73,33 @@ async def on_startup(bot: Bot):
 
 
 async def on_shutdown(bot: Bot):
+    global _heartbeat_task
     logger.info("Bot to'xtatilmoqda...")
-    scheduler.shutdown(wait=False)
+
+    try:
+        scheduler.shutdown(wait=False)
+    except Exception:
+        logger.exception("Scheduler to'xtashda xato")
+
+    if _heartbeat_task and not _heartbeat_task.done():
+        _heartbeat_task.cancel()
+        try:
+            await _heartbeat_task
+        except (asyncio.CancelledError, Exception):
+            pass
+
+    try:
+        from bot.core.broadcast_queue import broadcast_queue
+        if broadcast_queue:
+            await broadcast_queue.stop()
+    except Exception:
+        logger.exception("Broadcast queue to'xtashda xato")
+
+    try:
+        from bot.core.cache import cache
+        await cache.close()
+    except Exception:
+        pass
 
     for admin_id in settings.bot_superadmin_ids:
         try:
@@ -88,6 +132,9 @@ async def main():
         default=DefaultBotProperties(parse_mode=ParseMode.HTML),
     )
 
+    from bot.core.bot_middleware import RetryRequestMiddleware
+    bot.session.middleware(RetryRequestMiddleware())
+
     dp = Dispatcher(storage=storage)
 
     maintenance = MaintenanceMiddleware()
@@ -116,11 +163,57 @@ async def main():
     dp.startup.register(on_startup)
     dp.shutdown.register(on_shutdown)
 
-    logger.info("Polling boshlanmoqda...")
-    await dp.start_polling(
-        bot,
-        allowed_updates=dp.resolve_used_update_types(),
+    stop_event = asyncio.Event()
+
+    def _signal_handler():
+        logger.info("Tashqi to'xtatish signali keldi")
+        stop_event.set()
+
+    loop = asyncio.get_running_loop()
+    for sig_name in ("SIGTERM", "SIGINT"):
+        sig = getattr(signal, sig_name, None)
+        if sig is None:
+            continue
+        try:
+            loop.add_signal_handler(sig, _signal_handler)
+        except NotImplementedError:
+            # Windows
+            signal.signal(sig, lambda *_: stop_event.set())
+
+    polling_task = asyncio.create_task(
+        dp.start_polling(
+            bot,
+            allowed_updates=dp.resolve_used_update_types(),
+            handle_signals=False,
+        ),
+        name="polling",
     )
+
+    stop_task = asyncio.create_task(stop_event.wait(), name="stop")
+
+    done, pending = await asyncio.wait(
+        {polling_task, stop_task}, return_when=asyncio.FIRST_COMPLETED
+    )
+
+    if stop_task in done and not polling_task.done():
+        await dp.stop_polling()
+        try:
+            await asyncio.wait_for(polling_task, timeout=15)
+        except asyncio.TimeoutError:
+            polling_task.cancel()
+
+    for t in pending:
+        t.cancel()
+
+    try:
+        await bot.session.close()
+    except Exception:
+        pass
+
+    try:
+        await redis_client.aclose()
+    except Exception:
+        pass
 
 
 if __name__ == "__main__":

@@ -11,6 +11,7 @@ from sqlalchemy import (
     Index,
     UniqueConstraint,
     CheckConstraint,
+    text,
 )
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -97,9 +98,12 @@ class AnswerOption(Base):
 class TestSession(Base):
     __tablename__ = "test_sessions"
     __table_args__ = (
-        UniqueConstraint(
-            "user_id", "test_id", "status",
-            name="uq_active_session",
+        Index(
+            "uq_active_session",
+            "user_id",
+            "test_id",
+            unique=True,
+            postgresql_where=text("status = 'active'"),
         ),
         Index("ix_session_user_status", "user_id", "status"),
     )

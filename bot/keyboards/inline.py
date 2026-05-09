@@ -88,6 +88,7 @@ def admin_main_keyboard() -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     buttons = [
         ("📊 Dashboard", "admin:dashboard"),
+        ("📈 Statistika", "admin:stats"),
         ("👥 Foydalanuvchilar", "admin:users"),
         ("📝 Testlar", "admin:tests"),
         ("📚 Kurslar", "admin:courses"),
@@ -99,6 +100,8 @@ def admin_main_keyboard() -> InlineKeyboardMarkup:
         ("📚 Kutubxona", "admin:library"),
         ("🏢 Tashkilotlar", "admin:organizations"),
         ("📢 Broadcast", "admin:broadcast"),
+        ("🎯 Targetli broadcast", "admin:broadcast:segment"),
+        ("📥 Excel import", "admin:import"),
         ("📤 Export", "admin:export"),
     ]
     for text, data in buttons:
@@ -115,6 +118,7 @@ def superadmin_keyboard() -> InlineKeyboardMarkup:
         ("⚙️ Sozlamalar", "sa:settings"),
         ("💾 Backup", "sa:backup"),
         ("📋 Audit Log", "sa:audit"),
+        ("✉️ Takliflar", "sa:suggestions"),
         ("🔧 Texnik xizmat", "sa:maintenance"),
         ("📊 Tizim holati", "sa:system"),
         ("📜 Loglar", "sa:logs"),
