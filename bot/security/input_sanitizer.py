@@ -10,14 +10,6 @@ def sanitize_input(text: str) -> str:
     return text.strip()
 
 
-def sanitize_sql_input(text: str) -> str:
-    dangerous = ["--", ";", "DROP", "DELETE", "INSERT", "UPDATE", "ALTER", "EXEC", "UNION"]
-    result = text
-    for d in dangerous:
-        result = re.sub(re.escape(d), "", result, flags=re.IGNORECASE)
-    return result.strip()
-
-
 def validate_phone(phone: str) -> bool:
     cleaned = re.sub(r'[\s\-\(\)]', '', phone)
     return bool(re.match(r'^\+?\d{9,15}$', cleaned))

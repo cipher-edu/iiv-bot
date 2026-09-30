@@ -2,6 +2,7 @@ from datetime import date, timedelta
 from typing import Optional
 
 from sqlalchemy import select
+from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from bot.models.gamification import UserStreak
@@ -21,14 +22,21 @@ class StreakService:
         existing = (await self.session.execute(stmt)).scalar_one_or_none()
         if existing:
             return existing
-        streak = UserStreak(
-            user_id=user_id,
-            current_streak=0,
-            longest_streak=0,
+
+        # Race-safe upsert: parallel callbacks can both find no row and try to
+        # insert; ON CONFLICT DO NOTHING avoids UniqueViolation on user_id.
+        stmt = (
+            pg_insert(UserStreak)
+            .values(user_id=user_id, current_streak=0, longest_streak=0)
+            .on_conflict_do_nothing(index_elements=[UserStreak.user_id])
         )
-        self.session.add(streak)
+        await self.session.execute(stmt)
         await self.session.flush()
-        return streak
+
+        result = await self.session.execute(
+            select(UserStreak).where(UserStreak.user_id == user_id)
+        )
+        return result.scalar_one()
 
     async def get(self, user_id: int) -> UserStreak:
         return await self._get_or_create(user_id)

@@ -33,7 +33,8 @@ class CourseRepository(BaseRepository[Course]):
             select(Course)
             .where(Course.is_active == True, Course.is_deleted == False)
             .options(
-                selectinload(Course.modules).selectinload(CourseModule.lessons)
+                selectinload(Course.materials),
+                selectinload(Course.modules).selectinload(CourseModule.lessons),
             )
             .order_by(Course.order)
             .offset(offset)
@@ -49,9 +50,10 @@ class CourseRepository(BaseRepository[Course]):
             select(Course)
             .where(Course.id == course_id, Course.is_deleted == False)
             .options(
+                selectinload(Course.materials),
                 selectinload(Course.modules)
                 .selectinload(CourseModule.lessons)
-                .selectinload(Lesson.attachments)
+                .selectinload(Lesson.attachments),
             )
         )
         result = await self.session.execute(stmt)

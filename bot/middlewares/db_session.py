@@ -1,9 +1,12 @@
+import logging
 from typing import Any, Awaitable, Callable, Dict
 
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject
 
 from bot.models.base import async_session_factory
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseSessionMiddleware(BaseMiddleware):
@@ -15,6 +18,13 @@ class DatabaseSessionMiddleware(BaseMiddleware):
     ) -> Any:
         async with async_session_factory() as session:
             data["session"] = session
-            result = await handler(event, data)
-            await session.commit()
-            return result
+            try:
+                result = await handler(event, data)
+                await session.commit()
+                return result
+            except Exception:
+                try:
+                    await session.rollback()
+                except Exception:
+                    logger.exception("Session rollback failed")
+                raise

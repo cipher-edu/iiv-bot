@@ -31,7 +31,7 @@ class Course(Base):
     status: Mapped[CourseStatus] = mapped_column(
         String(20), default=CourseStatus.PUBLISHED, nullable=False
     )
-    difficulty: Mapped[str] = mapped_column(String(20), default="beginner")
+    difficulty: Mapped[str] = mapped_column(String(120), default="beginner")
     estimated_hours: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
 
     syllabus_file_id: Mapped[Optional[str]] = mapped_column(String(500), nullable=True)
@@ -41,6 +41,12 @@ class Course(Base):
         String(20), nullable=True
     )
 
+    materials: Mapped[list["CourseMaterial"]] = relationship(
+        back_populates="course",
+        lazy="selectin",
+        cascade="all, delete-orphan",
+        order_by="CourseMaterial.order",
+    )
     modules: Mapped[list["CourseModule"]] = relationship(
         back_populates="course",
         lazy="selectin",
@@ -60,6 +66,21 @@ class Course(Base):
     @property
     def total_lessons(self) -> int:
         return sum(len(m.lessons) for m in self.modules)
+
+
+class CourseMaterial(Base):
+    __tablename__ = "course_materials"
+    __table_args__ = (Index("ix_course_materials_course", "course_id"),)
+
+    course_id: Mapped[int] = mapped_column(
+        ForeignKey("courses.id", ondelete="CASCADE"), nullable=False
+    )
+    title: Mapped[str] = mapped_column(String(255), nullable=False)
+    url: Mapped[str] = mapped_column(String(1000), nullable=False)
+    file_type: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    order: Mapped[int] = mapped_column(Integer, default=0)
+
+    course: Mapped[Course] = relationship(back_populates="materials")
 
 
 class CourseModule(Base):

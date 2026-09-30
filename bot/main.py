@@ -157,6 +157,7 @@ async def main():
     root_router.message.outer_middleware(I18nMiddleware())
     root_router.callback_query.outer_middleware(I18nMiddleware())
     root_router.message.outer_middleware(AuditLogMiddleware())
+    root_router.callback_query.outer_middleware(AuditLogMiddleware())
 
     dp.include_router(root_router)
 

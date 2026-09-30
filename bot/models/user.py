@@ -85,6 +85,8 @@ class TelegramUser(Base):
 
     last_activity: Mapped[Optional[datetime]] = mapped_column(nullable=True)
     login_attempts: Mapped[int] = mapped_column(default=0)
+    login: Mapped[Optional[str]] = mapped_column(String(64), nullable=True)
+    password_hash: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
 
     def __repr__(self) -> str:
         return f"<TelegramUser(id={self.id}, tg_id={self.telegram_id}, name={self.full_name})>"

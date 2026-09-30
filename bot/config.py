@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     bot_token: str
     bot_admin_ids: list[int] = Field(default_factory=list)
     bot_superadmin_ids: list[int] = Field(default_factory=list)
+    web_app_url: str = ""
 
     # Database
     db_host: str = "postgres"
@@ -54,6 +55,7 @@ class Settings(BaseSettings):
     # Security
     secret_key: str
     encryption_key: str = ""
+    encryption_salt: str = ""
     jwt_secret: str = ""
     allowed_ips: list[str] = Field(default_factory=lambda: ["127.0.0.1"])
     rate_limit_user: int = 30

@@ -2,11 +2,23 @@ from aiogram.types import (
     ReplyKeyboardMarkup,
     KeyboardButton,
     ReplyKeyboardRemove,
+    WebAppInfo,
 )
+
+from bot.config import settings
 
 
 def main_menu_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
-    buttons = [
+    buttons = []
+    if settings.web_app_url:
+        buttons.append([
+            KeyboardButton(
+                text="📱 O'quv Platformasi (Web App)",
+                web_app=WebAppInfo(url=settings.web_app_url),
+            )
+        ])
+
+    buttons.extend([
         [KeyboardButton(text="📝 Testlar"), KeyboardButton(text="📚 Kurslar")],
         [KeyboardButton(text="📰 Yangiliklar"), KeyboardButton(text="🏆 Reyting")],
         [KeyboardButton(text="📜 Sertifikatlar"), KeyboardButton(text="🎮 Yutuqlar")],
@@ -16,7 +28,7 @@ def main_menu_keyboard(is_admin: bool = False) -> ReplyKeyboardMarkup:
         [KeyboardButton(text="🔥 Streak"), KeyboardButton(text="🔔 Bildirishnomalar")],
         [KeyboardButton(text="✉️ Taklif")],
         [KeyboardButton(text="👤 Profil"), KeyboardButton(text="❓ Yordam")],
-    ]
+    ])
     if is_admin:
         buttons.append([KeyboardButton(text="⚙️ Admin panel")])
 

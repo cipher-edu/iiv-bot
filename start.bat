@@ -77,12 +77,14 @@ echo ===============================================
 echo   LOYIHA TAYYOR!
 echo ===============================================
 echo.
-echo Bot:           Telegram @nsusupportbot
-echo Grafana:       http://localhost:3000
-echo pgAdmin:       http://localhost:5050
-echo MinIO konsoli: http://localhost:9001
-echo Prometheus:    http://localhost:9090
-echo Nginx:         http://localhost:8080
+echo Bot:             Telegram @nsusupportbot
+echo Web App (User):   http://localhost:3000
+echo Admin Panel:      http://localhost:3000/admin
+echo Grafana:         http://localhost:3001
+echo pgAdmin:         http://localhost:5050
+echo MinIO konsoli:   http://localhost:9001
+echo Prometheus:      http://localhost:9090
+echo Nginx:           http://localhost:8080
 echo.
 echo Bot loglari:   logs.bat
 echo To'xtatish:    stop.bat

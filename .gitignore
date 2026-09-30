@@ -28,8 +28,7 @@ docker-compose.override.yml
 # Data
 *.db
 *.sqlite3
-backups/*.sql
-backups/*.gz
+backups/
 
 # Logs
 *.log
@@ -48,6 +47,15 @@ nginx/ssl/*.crt
 bot/data/
 *.pdf
 media/
+
+# Node / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo
+
+# Uploaded course files
+webapp/public/uploads/
 
 # Testing
 .coverage

@@ -1,7 +1,14 @@
 from enum import Enum
 
 
-class Role(str, Enum):
+class ValueEnum(str, Enum):
+    """Keep str() equal to the stored database value on Python 3.14."""
+
+    def __str__(self) -> str:
+        return self.value
+
+
+class Role(ValueEnum):
     SUPERADMIN = "superadmin"
     ADMIN = "admin"
     MODERATOR = "moderator"
@@ -23,14 +30,14 @@ class Role(str, Enum):
         return self.level >= required.level
 
 
-class UserStatus(str, Enum):
+class UserStatus(ValueEnum):
     ACTIVE = "active"
     BLOCKED = "blocked"
     PENDING = "pending"
     INACTIVE = "inactive"
 
 
-class RegistrationStep(str, Enum):
+class RegistrationStep(ValueEnum):
     PHONE = "phone"
     FULL_NAME = "full_name"
     CATEGORY = "category"
@@ -41,31 +48,31 @@ class RegistrationStep(str, Enum):
     ORGANIZATION = "organization"
 
 
-class TestSessionStatus(str, Enum):
+class TestSessionStatus(ValueEnum):
     ACTIVE = "active"
     FINISHED = "finished"
     EXPIRED = "expired"
     ABANDONED = "abandoned"
 
 
-class OrganizationType(str, Enum):
+class OrganizationType(ValueEnum):
     DEPARTMENT = "bolim"
     FACULTY = "fakultet"
     CHAIR = "kafedra"
 
 
-class StaffRole(str, Enum):
+class StaffRole(ValueEnum):
     WORKER = "ishchi_hodim"
     DECANATE = "dekanat"
     PROFESSOR = "professor"
 
 
-class UserCategory(str, Enum):
+class UserCategory(ValueEnum):
     HODIM = "hodim"
     FUQARO = "fuqaro"
 
 
-class AttachmentType(str, Enum):
+class AttachmentType(ValueEnum):
     VIDEO = "video"
     PDF = "pdf"
     IMAGE = "image"
@@ -74,25 +81,25 @@ class AttachmentType(str, Enum):
     LINK = "link"
 
 
-class AttachmentStorage(str, Enum):
+class AttachmentStorage(ValueEnum):
     TELEGRAM = "telegram"
     MINIO = "minio"
     URL = "url"
 
 
-class CourseStatus(str, Enum):
+class CourseStatus(ValueEnum):
     DRAFT = "draft"
     PUBLISHED = "published"
     ARCHIVED = "archived"
 
 
-class Language(str, Enum):
+class Language(ValueEnum):
     UZ = "uz"
     RU = "ru"
     EN = "en"
 
 
-class NotificationType(str, Enum):
+class NotificationType(ValueEnum):
     SYSTEM = "system"
     INFO = "info"
     WARNING = "warning"
@@ -100,7 +107,7 @@ class NotificationType(str, Enum):
     REMINDER = "reminder"
 
 
-class AuditAction(str, Enum):
+class AuditAction(ValueEnum):
     LOGIN = "login"
     LOGOUT = "logout"
     CREATE = "create"
@@ -116,7 +123,7 @@ class AuditAction(str, Enum):
     FAILED_AUTH = "failed_auth"
 
 
-class BadgeType(str, Enum):
+class BadgeType(ValueEnum):
     FIRST_TEST = "first_test"
     TEN_TESTS = "ten_tests"
     PERFECT_SCORE = "perfect_score"
@@ -129,7 +136,7 @@ class BadgeType(str, Enum):
     EARLY_BIRD = "early_bird"
 
 
-class PointReason(str, Enum):
+class PointReason(ValueEnum):
     TEST_EXCELLENT = "test_excellent"
     TEST_GOOD = "test_good"
     TEST_SATISFACTORY = "test_satisfactory"

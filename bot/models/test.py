@@ -34,6 +34,15 @@ class Test(Base):
     max_attempts: Mapped[int] = mapped_column(Integer, default=0)
     show_correct_answers: Mapped[bool] = mapped_column(Boolean, default=False)
     target_organizations: Mapped[Optional[list]] = mapped_column(JSON, default=list)
+    course_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("courses.id", ondelete="SET NULL"), nullable=True
+    )
+    module_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("course_modules.id", ondelete="SET NULL"), nullable=True
+    )
+    lesson_id: Mapped[Optional[int]] = mapped_column(
+        ForeignKey("lessons.id", ondelete="SET NULL"), nullable=True
+    )
 
     questions: Mapped[list["Question"]] = relationship(
         back_populates="test", lazy="selectin", cascade="all, delete-orphan"

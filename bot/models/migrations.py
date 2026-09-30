@@ -17,8 +17,24 @@ logger = logging.getLogger(__name__)
 SCHEMA_PATCHES: list[str] = [
     # users.category (UserCategory: hodim/fuqaro)
     "ALTER TABLE users ADD COLUMN IF NOT EXISTS category VARCHAR(20)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS login VARCHAR(64)",
+    "ALTER TABLE users ADD COLUMN IF NOT EXISTS password_hash VARCHAR(255)",
+    "CREATE UNIQUE INDEX IF NOT EXISTS uq_users_login ON users (login) WHERE login IS NOT NULL",
     # courses: status (DRAFT/PUBLISHED/ARCHIVED) and syllabus
+    "ALTER TABLE courses ALTER COLUMN difficulty TYPE VARCHAR(120)",
     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS status VARCHAR(20) NOT NULL DEFAULT 'published'",
+    """CREATE TABLE IF NOT EXISTS course_materials (
+        id BIGSERIAL PRIMARY KEY,
+        course_id BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+        title VARCHAR(255) NOT NULL,
+        url VARCHAR(1000) NOT NULL,
+        file_type VARCHAR(20),
+        "order" INTEGER DEFAULT 0,
+        created_at TIMESTAMPTZ DEFAULT NOW(),
+        updated_at TIMESTAMPTZ DEFAULT NOW(),
+        is_deleted BOOLEAN NOT NULL DEFAULT FALSE
+    )""",
+    "CREATE INDEX IF NOT EXISTS ix_course_materials_course ON course_materials (course_id)",
     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS syllabus_file_id VARCHAR(500)",
     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS syllabus_url VARCHAR(500)",
     "ALTER TABLE courses ADD COLUMN IF NOT EXISTS syllabus_title VARCHAR(255)",
@@ -30,6 +46,9 @@ SCHEMA_PATCHES: list[str] = [
     "ALTER TABLE test_sessions DROP CONSTRAINT IF EXISTS uq_active_session",
     "DROP INDEX IF EXISTS uq_active_session",
     "CREATE UNIQUE INDEX IF NOT EXISTS uq_active_session ON test_sessions (user_id, test_id) WHERE status = 'active'",
+    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS course_id BIGINT REFERENCES courses(id) ON DELETE SET NULL",
+    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS module_id BIGINT REFERENCES course_modules(id) ON DELETE SET NULL",
+    "ALTER TABLE tests ADD COLUMN IF NOT EXISTS lesson_id BIGINT REFERENCES lessons(id) ON DELETE SET NULL",
 ]
 
 

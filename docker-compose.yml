@@ -30,6 +30,41 @@ services:
         max-size: "10m"
         max-file: "5"
 
+  webapi:
+    build: .
+    container_name: iiv_webapi
+    restart: always
+    env_file: .env
+    command: ["python", "-m", "bot.api.server"]
+    environment:
+      DB_HOST: postgres
+      REDIS_HOST: redis
+      MINIO_HOST: minio
+      WEB_API_PORT: "8081"
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - app_net
+
+  webapp:
+    build:
+      context: ./webapp
+      dockerfile: Dockerfile
+    container_name: iiv_webapp
+    restart: always
+    environment:
+      - PORT=3000
+      - API_PROXY_URL=http://webapi:8081
+    ports:
+      - "3000:3000"
+    depends_on:
+      - webapi
+    networks:
+      - app_net
+
   postgres:
     image: timescale/timescaledb:latest-pg15
     container_name: iiv_postgres
@@ -43,7 +78,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init.sql:/docker-entrypoint-initdb.d/01-init.sql
     ports:
-      - "5432:5432"
+      - "127.0.0.1:5432:5432"
     networks:
       - app_net
     healthcheck:
@@ -81,7 +116,7 @@ services:
     volumes:
       - redis_data:/data
     ports:
-      - "6379:6379"
+      - "127.0.0.1:6379:6379"
     networks:
       - app_net
     healthcheck:
@@ -105,7 +140,7 @@ services:
       - pgadmin_data:/var/lib/pgadmin
       - ./monitoring/pgadmin/servers.json:/pgadmin4/servers.json
     ports:
-      - "5050:80"
+      - "127.0.0.1:5050:80"
     depends_on:
       postgres:
         condition: service_healthy
@@ -125,7 +160,7 @@ services:
       - ./monitoring/grafana/provisioning:/etc/grafana/provisioning
       - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards
     ports:
-      - "3000:3000"
+      - "127.0.0.1:3001:3000"
     depends_on:
       - prometheus
       - loki
@@ -141,7 +176,7 @@ services:
       - ./monitoring/prometheus/alerts.yml:/etc/prometheus/alerts.yml
       - prometheus_data:/prometheus
     ports:
-      - "9090:9090"
+      - "127.0.0.1:9090:9090"
     networks:
       - app_net
     command:
@@ -156,7 +191,7 @@ services:
       - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml
       - loki_data:/loki
     ports:
-      - "3100:3100"
+      - "127.0.0.1:3100:3100"
     networks:
       - app_net
     command: -config.file=/etc/loki/local-config.yaml
@@ -174,8 +209,8 @@ services:
     volumes:
       - minio_data:/data
     ports:
-      - "9000:9000"
-      - "9001:9001"
+      - "127.0.0.1:9000:9000"
+      - "127.0.0.1:9001:9001"
     networks:
       - app_net
     healthcheck:
@@ -207,19 +242,21 @@ services:
 
   # ═══════════════ MAINTENANCE ═══════════════
 
-  watchtower:
-    image: containrrr/watchtower
-    container_name: iiv_watchtower
-    restart: always
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    environment:
-      WATCHTOWER_CLEANUP: "true"
-      WATCHTOWER_SCHEDULE: "0 0 4 * * *"
-      WATCHTOWER_NOTIFICATIONS: "email"
-      WATCHTOWER_MONITOR_ONLY: "true"
-    networks:
-      - app_net
+  # watchtower: avtomatik image yangilash xizmati.
+  # Docker Desktop host API versiyasi eskirgani sababli vaqtincha o'chirilgan.
+  # Docker Desktop yangilangach yoki Linux host'da qayta yoqing.
+  # watchtower:
+  #   image: containrrr/watchtower:1.5.3
+  #   container_name: iiv_watchtower
+  #   restart: always
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   environment:
+  #     WATCHTOWER_CLEANUP: "true"
+  #     WATCHTOWER_SCHEDULE: "0 0 4 * * *"
+  #     WATCHTOWER_MONITOR_ONLY: "true"
+  #   networks:
+  #     - app_net
 
   backup:
     image: prodrigestivill/postgres-backup-local
@@ -267,4 +304,4 @@ networks:
     driver: bridge
     ipam:
       config:
-        - subnet: 172.22.0.0/16
+        - subnet: 172.28.0.0/16

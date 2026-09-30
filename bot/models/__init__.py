@@ -1,7 +1,7 @@
 from bot.models.base import Base, async_session_factory, engine
 from bot.models.user import TelegramUser, Organization
 from bot.models.test import Test, Question, AnswerOption, TestSession, UserAnswer, TestResult
-from bot.models.course import Course, CourseModule, Lesson, Enrollment, LessonProgress
+from bot.models.course import Course, CourseMaterial, CourseModule, Lesson, Enrollment, LessonProgress
 from bot.models.news import News, BroadcastLog
 from bot.models.rating import UserRating, PointTransaction, WeeklyLeaderboard
 from bot.models.certificate import Certificate, CertificateTemplate
