@@ -180,19 +180,35 @@ REM [7/8] Xizmatlarni alohida oynalarda ishga tushirish
 REM ---------------------------------------------------------------------------
 echo [7/8] Xizmatlar ishga tushirilmoqda...
 
+REM Port band bo'lsa - xizmat allaqachon ishlayapti, ikkinchi nusxa ochilmaydi
+REM - WinError 10048 xatosining oldini oladi.
 echo     - Web API - port 8081
+netstat -ano | findstr /R /C:":8081 .*LISTENING" > nul
+if not errorlevel 1 goto API_RUNNING
 start "IIV Web API (Port 8081)" /D "%ROOT%" cmd /k ""%VPY%" -m bot.api.server"
 timeout /t 2 /nobreak > nul
+goto API_DONE
+:API_RUNNING
+echo       [OK] Web API allaqachon ishlayapti.
+:API_DONE
 
 echo     - Web App - port 3000
+netstat -ano | findstr /R /C:":3000 .*LISTENING" > nul
+if not errorlevel 1 goto WEB_RUNNING
 start "IIV Web App Server (Port 3000)" /D "%ROOT%\webapp" cmd /k "npm run dev"
-timeout /t 3 /nobreak > nul
+goto WEB_DONE
+:WEB_RUNNING
+echo       [OK] Web App allaqachon ishlayapti.
+:WEB_DONE
 
-echo     - Telegram HTTPS tunnel - ixtiyoriy
-start "IIV Telegram Tunnel" /D "%ROOT%" cmd /k "tunnel.bat"
-timeout /t 2 /nobreak > nul
+REM trycloudflare manzili har safar yangi - uni .env ga yozib, keyin botni ochamiz
+echo     - Telegram HTTPS tunnel - yangi manzil .env ga yoziladi
+powershell -NoProfile -ExecutionPolicy Bypass -File "%ROOT%\update-tunnel.ps1" -NoServices
+if errorlevel 1 echo       [OGOHLANTIRISH] Tunnel ochilmadi - Mini App telefonda ishlamasligi mumkin.
 
 echo     - Telegram Bot
+REM Eski bot nusxalarini yopish - bir token bilan ikki bot Conflict beradi
+powershell -NoProfile -Command "Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like '*run_bot.py*' -and $_.Name -like 'python*' } | ForEach-Object { Stop-Process -Id $_.ProcessId -Force }" > nul 2>&1
 start "IIV Telegram Bot (@ijaransubot)" /D "%ROOT%" cmd /k ""%VPY%" run_bot.py"
 
 REM ---------------------------------------------------------------------------
