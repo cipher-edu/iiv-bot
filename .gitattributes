@@ -1,0 +1,12 @@
+# Ensure bash scripts always use LF (Unix) line endings on all platforms
+*.sh text eol=lf
+*.sql text eol=lf
+*.py text eol=lf
+*.json text eol=lf
+*.yml text eol=lf
+*.yaml text eol=lf
+*.md text eol=lf
+
+# Windows batch files use CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf

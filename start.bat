@@ -1,141 +1,231 @@
 @echo off
+setlocal EnableExtensions EnableDelayedExpansion
 chcp 65001 > nul
-title IIV EduBot - Ishga tushirish
+title IIV EduBot - Avtomatik O'rnatish va Ishga Tushirish
 color 0B
 
 cd /d "%~dp0"
 
 echo.
-echo ===============================================
-echo   IIV EDUBOT PLATFORM - AVTO ISHGA TUSHIRISH
-echo ===============================================
+echo ==================================================================
+echo     IIV EDUBOT PLATFORM - AVTOMATIK SOZLASH VA ISHGA TUSHIRISH   
+echo ==================================================================
 echo.
 
-REM --- 1. Docker mavjudligini tekshirish ---
+REM --- 1. .env faylini tekshirish va avtomatik yaratish ---
+echo [1/5] Konfiguratsiya (.env) tekshirilmoqda...
+if not exist ".env" (
+    if exist ".env.example" (
+        echo     .env fayli topilmadi. .env.example dan avtomatik nusxalanmoqda...
+        copy /y ".env.example" ".env" > nul
+        echo     [OK] .env fayli yaratildi.
+    ) else (
+        echo     [XATO] .env yoki .env.example fayli topilmadi!
+        pause
+        exit /b 1
+    )
+) else (
+    echo     [OK] .env fayli mavjud.
+)
+
+REM --- 2. Docker va Docker Compose mavjudligini tekshirish ---
+echo [2/5] Docker muhiti tekshirilmoqda...
+set "HAS_DOCKER=0"
 where docker > nul 2>&1
-if errorlevel 1 goto NO_DOCKER
-echo [1/5] Docker o'rnatilgan: OK
+if not errorlevel 1 (
+    set "HAS_DOCKER=1"
+)
 
-REM --- 2. Docker daemon holatini tekshirish ---
-docker info > nul 2>&1
-if not errorlevel 1 goto DOCKER_READY
+if "%HAS_DOCKER%"=="1" (
+    REM Docker daemon holatini tekshirish
+    docker info > nul 2>&1
+    if errorlevel 1 (
+        echo     Docker daemon ishlamayapti. Docker Desktop ishga tushirilmoqda...
+        set "DOCKER_EXE="
+        if exist "%ProgramFiles%\Docker\Docker\Docker Desktop.exe" set "DOCKER_EXE=%ProgramFiles%\Docker\Docker\Docker Desktop.exe"
+        if not defined DOCKER_EXE if exist "%ProgramW6432%\Docker\Docker\Docker Desktop.exe" set "DOCKER_EXE=%ProgramW6432%\Docker\Docker\Docker Desktop.exe"
+        if not defined DOCKER_EXE if exist "%LocalAppData%\Docker\Docker Desktop.exe" set "DOCKER_EXE=%LocalAppData%\Docker\Docker Desktop.exe"
 
-echo [2/5] Docker Desktop ishga tushirilmoqda...
+        if defined DOCKER_EXE (
+            start "" "%DOCKER_EXE%"
+            echo     Docker daemon javob berishi kutilmoqda (60 soniyagacha)...
+            set /a WAIT_COUNT=0
+            :WAIT_DOCKER_LOOP
+            timeout /t 3 /nobreak > nul
+            set /a WAIT_COUNT=!WAIT_COUNT!+3
+            docker info > nul 2>&1
+            if not errorlevel 1 goto DOCKER_ACTIVE
+            if !WAIT_COUNT! GEQ 60 goto DOCKER_FAILED
+            echo     ... !WAIT_COUNT! soniya
+            goto WAIT_DOCKER_LOOP
+        ) else (
+            echo     Docker Desktop fayli topilmadi.
+            goto DOCKER_FAILED
+        )
+    )
+    :DOCKER_ACTIVE
+    echo     [OK] Docker daemon ishlamoqda.
+    goto DOCKER_MODE
+)
 
-set "DOCKER_EXE="
-if exist "%ProgramFiles%\Docker\Docker\Docker Desktop.exe" set "DOCKER_EXE=%ProgramFiles%\Docker\Docker\Docker Desktop.exe"
-if not defined DOCKER_EXE if exist "%ProgramW6432%\Docker\Docker\Docker Desktop.exe" set "DOCKER_EXE=%ProgramW6432%\Docker\Docker\Docker Desktop.exe"
-if not defined DOCKER_EXE if exist "%LocalAppData%\Docker\Docker Desktop.exe" set "DOCKER_EXE=%LocalAppData%\Docker\Docker Desktop.exe"
+:DOCKER_FAILED
+echo     [OGOHLANTIRISH] Docker topilmadi yoki ishga tushmadi.
+echo     Mahalliy (Local Python + Node.js) rejimga o'tilmoqda...
+goto LOCAL_MODE
 
-if not defined DOCKER_EXE goto NO_DOCKER_DESKTOP
+REM ============================================================================
+REM DOCKER REJIMI (Konteynerlar bilan ishga tushirish)
+REM ============================================================================
+:DOCKER_MODE
+echo.
+echo [3/5] DOCKER REJIMI: Konteynerlar qurilmoqda va ko'tarilmoqda...
+echo.
 
-start "" "%DOCKER_EXE%"
+docker compose -p iiv-bot up -d --build --remove-orphans
+if errorlevel 1 (
+    echo.
+    echo [XATO] Docker Compose orqali konteynerlarni ko'tarib bo'lmadi.
+    echo Mahalliy rejimni sinab ko'ramiz...
+    goto LOCAL_MODE
+)
 
-echo     Docker daemon javob berishi kutilmoqda (90 soniyagacha)...
-set /a WAIT=0
-:WAIT_DOCKER
+echo.
+echo [4/5] PostgreSQL ma'lumotlar bazasi tekshirilmoqda...
+set /a DB_WAIT=0
+:WAIT_DB_LOOP
 timeout /t 3 /nobreak > nul
-set /a WAIT=%WAIT%+3
-docker info > nul 2>&1
-if not errorlevel 1 goto DOCKER_STARTED
-if %WAIT% GEQ 90 goto DOCKER_TIMEOUT
-echo     ... %WAIT% soniya
-goto WAIT_DOCKER
+set /a DB_WAIT=!DB_WAIT!+3
+docker compose -p iiv-bot exec -T postgres pg_isready -U iiv_admin -d iiv_bot > nul 2>&1
+if not errorlevel 1 goto DB_READY
+if !DB_WAIT! GEQ 45 goto DB_READY
+goto WAIT_DB_LOOP
 
-:DOCKER_STARTED
-echo [2/5] Docker daemon: OK
-goto CHECK_ENV
-
-:DOCKER_READY
-echo [2/5] Docker daemon allaqachon ishlamoqda: OK
-
-:CHECK_ENV
-REM --- 3. .env fayli ---
-if not exist ".env" goto NO_ENV
-echo [3/5] .env fayli: OK
-
-REM --- 4. docker-compose.yml ---
-if not exist "docker-compose.yml" goto NO_COMPOSE
-echo [4/5] docker-compose.yml: OK
-
-REM --- 5. Konteynerlar ---
-echo.
-echo [5/5] Konteynerlar ko'tarilmoqda... (birinchi marta 1-2 daqiqa olishi mumkin)
-echo.
-
-docker compose -p iiv-bot up -d --remove-orphans
-if errorlevel 1 goto COMPOSE_FAIL
+:DB_READY
+echo     [OK] Ma'lumotlar bazasi tayyor.
+echo     Migratsiyalar va demo ma'lumotlar tekshirilmoqda...
+docker compose -p iiv-bot exec -T bot alembic upgrade head > nul 2>&1
+docker compose -p iiv-bot exec -T bot python scripts/seed_demo.py > nul 2>&1
 
 echo.
-echo ===============================================
-echo   KONTEYNERLAR HOLATI
-echo ===============================================
+echo [5/5] TIZIM TAYYOR VA ISHGA TUSHIRILDI!
+echo ==================================================================
+echo       IIV EDUBOT PLATFORMASI MUVAFFAQIYATLI ISHGA TUSHDI!         
+echo ==================================================================
 docker compose -p iiv-bot ps
-
 echo.
-echo ===============================================
-echo   LOYIHA TAYYOR!
-echo ===============================================
+echo MANZILLAR:
+echo   • Telegram Bot:         @ijaransubot
+echo   • Web App (User):       http://localhost:3000
+echo   • Admin Dashboard:      http://localhost:3000/admin
+echo   • Web API Server:       http://localhost:8081
+echo   • Grafana Monitoring:   http://localhost:3001
+echo   • pgAdmin:              http://localhost:5050
+echo   • MinIO Fayl Saqlash:  http://localhost:9001
+echo   • Prometheus:           http://localhost:9090
+echo   • Nginx Proxy:          http://localhost:8080
 echo.
-echo Bot:             Telegram @nsusupportbot
-echo Web App (User):   http://localhost:3000
-echo Admin Panel:      http://localhost:3000/admin
-echo Grafana:         http://localhost:3001
-echo pgAdmin:         http://localhost:5050
-echo MinIO konsoli:   http://localhost:9001
-echo Prometheus:      http://localhost:9090
-echo Nginx:           http://localhost:8080
-echo.
-echo Bot loglari:   logs.bat
-echo To'xtatish:    stop.bat
+echo BOSHQARUV:
+echo   • Jonli loglar:  logs.bat
+echo   • To'xtatish:    stop.bat
+echo ==================================================================
 echo.
 pause
 exit /b 0
 
-:NO_DOCKER
+REM ============================================================================
+REM MAHALLIY (LOCAL) REJIM (Agar Docker bo'lmasa)
+REM ============================================================================
+:LOCAL_MODE
 echo.
-echo [XATO] Docker o'rnatilmagan!
-echo Docker Desktop ni shu yerdan yuklab oling:
-echo   https://www.docker.com/products/docker-desktop
-echo.
-pause
-exit /b 1
+echo [3/5] MAHALLIY REJIM: Python va Node.js tekshirilmoqda...
 
-:NO_DOCKER_DESKTOP
-echo.
-echo [XATO] Docker Desktop topilmadi (Program Files yoki LocalAppData ichida).
-echo Iltimos, Docker Desktop ni qo'lda ishga tushiring va yana urinib ko'ring.
-echo.
-pause
-exit /b 1
+set "PY_CMD="
+where python > nul 2>&1
+if not errorlevel 1 set "PY_CMD=python"
+if not defined PY_CMD (
+    where py > nul 2>&1
+    if not errorlevel 1 set "PY_CMD=py"
+)
 
-:DOCKER_TIMEOUT
-echo.
-echo [XATO] Docker daemon 90 soniyada javob bermadi.
-echo Docker Desktop oynasida tray belgisini tekshiring.
-echo.
-pause
-exit /b 1
+if not defined PY_CMD (
+    echo.
+    echo [XATO] Python topilmadi!
+    echo Iltimos, Python 3.11+ ni o'rnating: https://www.python.org/downloads/
+    pause
+    exit /b 1
+)
 
-:NO_ENV
-echo.
-echo [XATO] .env fayli topilmadi: %CD%\.env
-echo .env.example ni .env nomi bilan nusxalang va qiymatlarni to'ldiring.
-echo.
-pause
-exit /b 1
+echo     [OK] Python topildi: %PY_CMD%
 
-:NO_COMPOSE
-echo.
-echo [XATO] docker-compose.yml topilmadi: %CD%\docker-compose.yml
-echo.
-pause
-exit /b 1
+REM Virtual muhitni tekshirish
+if not exist "venv" (
+    echo     Virtual muhit (venv) yaratilmoqda...
+    %PY_CMD% -m venv venv
+    if errorlevel 1 (
+        echo [XATO] Virtual muhit yaratib bo'lmadi.
+        pause
+        exit /b 1
+    )
+)
 
-:COMPOSE_FAIL
+call venv\Scripts\activate.bat 2> nul || goto VENV_FAIL
+goto VENV_OK
+
+:VENV_FAIL
+echo     [OGOHLANTIRISH] venv aktivlashtirib bo'lmadi, asosiy python ishlatiladi.
+set "ACT_PY=%PY_CMD%"
+goto PIP_INSTALL
+
+:VENV_OK
+set "ACT_PY=python"
+
+:PIP_INSTALL
+echo     Kutubxonalar tekshirilmoqda (requirements.txt)...
+%ACT_PY% -m pip install -r requirements.txt > nul 2>&1
+
+REM Node.js va WebApp
+where node > nul 2>&1
+if not errorlevel 1 (
+    if exist "webapp" (
+        if not exist "webapp\node_modules" (
+            echo     Web App paketlari o'rnatilmoqda (npm install)...
+            pushd webapp
+            call npm install > nul 2>&1
+            popd
+        )
+    )
+)
+
 echo.
-echo [XATO] Konteynerlarni ishga tushirib bo'lmadi.
-echo Yuqoridagi xato xabarini tekshiring.
+echo [4/5] Docker bazasi (agar mavjud bo'lsa) ko'tarilmoqda...
+if "%HAS_DOCKER%"=="1" (
+    docker compose -p iiv-bot up -d postgres redis > nul 2>&1
+)
+
 echo.
+echo [5/5] Xizmatlar ishga tushirilmoqda...
+echo.
+echo ==================================================================
+echo   BARCHA XIZMATLAR ISHGA TUSHIRILMOQDA!
+echo   - Web App:      http://localhost:3000
+echo   - Admin Panel:  http://localhost:3000/admin
+echo   - Web API:      http://localhost:8081
+echo ==================================================================
+echo.
+
+start "IIV Web API" cmd /k "cd /d %~dp0 && %ACT_PY% -m bot.api.server"
+timeout /t 2 /nobreak > nul
+
+where node > nul 2>&1
+if not errorlevel 1 (
+    if exist "webapp" (
+        start "IIV Web App (Port 3000)" cmd /k "cd /d %~dp0\webapp && npm run dev"
+        timeout /t 2 /nobreak > nul
+    )
+)
+
+start "IIV Telegram Bot" cmd /k "cd /d %~dp0 && %ACT_PY% run_bot.py"
+
+echo Barcha oynalar alohida ochildi. Ushbu oynani yopishingiz mumkin.
 pause
-exit /b 1
+exit /b 0

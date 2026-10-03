@@ -20,8 +20,24 @@ if errorlevel 1 (
 )
 
 echo [1/3] Server muhiti tekshirildi: Node.js OK
+
+if not exist "node_modules" (
+    echo [MA'LUMOT] Web App paketlari - node_modules topilmadi.
+    echo O'rnatilmoqda - npm install...
+    call npm install
+    if errorlevel 1 (
+        echo [XATO] npm install muvaffaqiyatsiz tugadi!
+        pause
+        exit /b 1
+    )
+    echo [OK] Paketlar muvaffaqiyatli o'rnatildi.
+)
+
+set "PY_CMD=python"
+if exist "%~dp0venv\Scripts\python.exe" set "PY_CMD=%~dp0venv\Scripts\python.exe"
+
 echo [2/3] Web API (port 8081) yangi oynada ochilmoqda...
-start "IIV Web API" cmd /k "cd /d %~dp0 && python -m bot.api.server"
+start "IIV Web API" cmd /k "cd /d %~dp0 && %PY_CMD% -m bot.api.server"
 echo [3/3] Next.js Web App ishga tushirilmoqda...
 echo.
 echo =======================================================
@@ -35,3 +51,4 @@ echo =======================================================
 echo.
 
 npm run dev
+
